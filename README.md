@@ -27,9 +27,13 @@ npm run lint          # ESLint
 npm run lint:fix      # ESLint 自动修复
 npm run format        # Prettier 写入
 npm run format:check  # Prettier 校验（CI 友好）
+
+# 5. 端到端自测（需要先起 dev server，另开一个终端）
+npx playwright install chromium   # 首次需要，下载浏览器
+npm run test:e2e                  # 真实点击跑全流程，产物在 e2e/shots、e2e/downloads
 ```
 
-**登录说明**：模拟登录，任意非空账号 + 密码（>= 4 位）即可进入。例如 `admin / 123456`。
+**登录说明**：模拟登录，任意**非空**账号 + 密码即可进入（与需求「任意账号密码均可登录成功」一致，不设长度下限）。例如 `admin / 123456`。
 
 **数据说明**：本项目自带「模拟后端」，数据存放在浏览器内存中。写操作（新建 / 续卡 / 撤单）会真实修改内存数据，
 后续查询可以查到变更结果；**刷新页面即重置为 36 条初始种子数据**。
@@ -45,6 +49,10 @@ npm run format:check  # Prettier 校验（CI 友好）
 ├── eslint.config.js               # ESLint 9 flat config（含 prettier 冲突关闭）
 ├── .prettierrc.json               # Prettier 配置（无分号 / 单引号 / 100 列）
 ├── package.json
+├── docs/
+│   └── requirements.md            # 试题要求原文 + 逐条需求符合性自查表
+├── e2e/
+│   └── qa.cjs                     # 端到端自测脚本（Playwright，真实点击，59 条断言）
 └── src/
     ├── main.jsx                   # 应用入口：ConfigProvider(zh_CN) + AntdApp + BrowserRouter + GlobalProviders
     ├── App.jsx                    # 路由表 + 页面级懒加载
@@ -297,17 +305,17 @@ bindToast(message) // ← 传错了：message.message 是 undefined
 
 ## 六、开发过程中使用的工具
 
-| 工具                                      | 用在什么环节                                                                                                                                                |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Node.js 24.15.0 / npm 11**              | 依赖安装、运行脚本、构建                                                                                                                                    |
-| **Vite 7**                                | 开发服务器（HMR）、生产构建                                                                                                                                 |
-| **ESLint 9（flat config）**               | 静态检查：未使用变量、hooks 规则、import 规范                                                                                                               |
-| **Prettier 3**                            | 代码格式化，统一风格；`format:check` 作为提交前的门禁                                                                                                       |
-| **vite-node**                             | 写一次性脚本脱离浏览器直接跑 mock 数据层，验证分页 / 筛选 / 写操作（第四节 4.1 就是靠它定位的）                                                             |
-| **Chrome DevTools**                       | 检查 localStorage 中的 token、Network 面板确认拦截器链路                                                                                                    |
-| **Playwright（浏览器自动化）**            | 端到端自测：登录 → Tab 切换 → 搜索 → 批量续卡 → 撤单 → 导出 CSV → 新建订单 → 路由守卫，并截图留证                                                           |
-| **AI 编码助手（Claude Code / OpenCode）** | 脚手架与基础设施层实现、页面代码生成、代码走查与自检、README 撰写。**如实说明：本项目的代码由 AI 辅助编写**，需求拆解、架构取舍、假设判断与最终验证由人确认 |
-| **Git**                                   | 按正常工作节奏分多次提交（脚手架 → 页面 → 文档）                                                                                                            |
+| 工具                                      | 用在什么环节                                                                                                                                                               |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Node.js 24.15.0 / npm 11**              | 依赖安装、运行脚本、构建                                                                                                                                                   |
+| **Vite 7**                                | 开发服务器（HMR）、生产构建                                                                                                                                                |
+| **ESLint 9（flat config）**               | 静态检查：未使用变量、hooks 规则、import 规范                                                                                                                              |
+| **Prettier 3**                            | 代码格式化，统一风格；`format:check` 作为提交前的门禁                                                                                                                      |
+| **vite-node**                             | 写一次性脚本脱离浏览器直接跑 mock 数据层，验证分页 / 筛选 / 写操作（第四节 4.1 就是靠它定位的）                                                                            |
+| **Chrome DevTools**                       | 检查 localStorage 中的 token、Network 面板确认拦截器链路                                                                                                                   |
+| **Playwright（浏览器自动化）**            | 端到端自测：登录 → Tab 切换 → 搜索 → 批量续卡 → 撤单 → 导出 CSV → 新建订单 → 路由守卫，并截图留证。脚本已纳入版本管理（`e2e/qa.cjs`，`npm run test:e2e`），当前 59/59 通过 |
+| **AI 编码助手（Claude Code / OpenCode）** | 脚手架与基础设施层实现、页面代码生成、代码走查与自检、README 撰写。**如实说明：本项目的代码由 AI 辅助编写**，需求拆解、架构取舍、假设判断与最终验证由人确认                |
+| **Git**                                   | 按正常工作节奏分多次提交（脚手架 → 页面 → 文档）                                                                                                                           |
 
 ---
 
@@ -344,6 +352,7 @@ bindToast(message) // ← 传错了：message.message 是 undefined
    接口签名不变，页面零改动。
 3. **导出未做异步任务**（问题 6 未澄清）。当前 5000 行上限是浏览器端的兜底，超大规模需要后端生成 + 下载中心。
 4. **CSV 未做汇总行**（假设 A9）。
-5. **未写单元测试**。本次采用「mock 层用 vite-node 脚本验证 + Playwright 端到端点击验证」的方式保证质量；
-   若要补测试，优先级最高的是 `money.js`（null / 0 / 负数 / 超大数）、`calcRenewAmount`（4 年 vs 5 年边界）和
+5. **未写单元测试**。质量靠「mock 层用 vite-node 脚本验证 + Playwright 端到端点击验证」保证，
+   其中端到端脚本已提交到 `e2e/qa.cjs`（`npm run test:e2e`，59 条断言，随源码一起交付以保证结论可复现）。
+   若要补单元测试，优先级最高的是 `money.js`（null / 0 / 负数 / 超大数）、`calcRenewAmount`（4 年 vs 5 年边界）和
    `csv.js`（逗号 / 引号 / 换行 / 公式注入转义）。
