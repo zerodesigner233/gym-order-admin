@@ -9,7 +9,7 @@
 import {
   ANNUAL_PRICE,
   CANCELLABLE_STATUSES,
-  ONGOING_STATUSES,
+  ORDER_TABS,
   RENEWABLE_STATUSES,
   calcCreateAmount,
   calcRenewAmount,
@@ -209,20 +209,22 @@ function toDto(order) {
  * @param {string} [params.tab]         Tab key：all / ongoing / expired / completed / cancelled
  * @param {string} [params.orderNo]     订单号，精确匹配
  * @param {string} [params.memberName]  会员姓名，模糊匹配
- * @param {string[]} [params.statuses]   直接指定状态集合（导出等场景使用）
  * @returns {{ list: object[], total: number, page: number, pageSize: number }}
  */
 export function queryOrders(params = {}) {
-  const { page = 1, pageSize = 10, tab = 'all', orderNo = '', memberName = '', statuses } = params
+  const { page = 1, pageSize = 10, tab = 'all', orderNo = '', memberName = '' } = params
 
   let filtered = orders.slice()
 
-  if (Array.isArray(statuses) && statuses.length) {
+  // Tab → 状态集合直接查 ORDER_TABS，不再在 mock 层复刻一份映射。
+  // 原本这里是 if (tab === 'ongoing') … else if (tab !== 'all') o.status === tab，
+  // 与 ORDER_TABS[].statuses 各写一份：新增状态时漏改一处就会静默筛错，
+  // 而 ORDER_TABS[].statuses 本身则完全无人读取（纯死代码）。
+  // 'all' 仍保持不过滤，避免枚举外的状态从「全部」里消失；
+  // 未知 tab 查不到状态集合 → 0 条，与原先 o.status === tab 的结果一致。
+  if (tab && tab !== 'all') {
+    const statuses = ORDER_TABS.find((t) => t.key === tab)?.statuses || []
     filtered = filtered.filter((o) => statuses.includes(o.status))
-  } else if (tab === 'ongoing') {
-    filtered = filtered.filter((o) => ONGOING_STATUSES.includes(o.status))
-  } else if (tab && tab !== 'all') {
-    filtered = filtered.filter((o) => o.status === tab)
   }
 
   if (orderNo) {
