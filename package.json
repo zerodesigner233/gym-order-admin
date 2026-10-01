@@ -1,0 +1,42 @@
+{
+  "name": "gym-order-admin",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "健身房会员办卡订单管理模块 - 前端工程师笔试题",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,css,md}\" \"*.{js,json,md,html}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,css,md}\" \"*.{js,json,md,html}\""
+  },
+  "dependencies": {
+    "@ant-design/icons": "^6.3.4",
+    "ahooks": "^3.9.5",
+    "antd": "^5.27.4",
+    "axios": "^1.12.2",
+    "dayjs": "^1.11.18",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.9.3",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@vitejs/plugin-react": "^5.0.4",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^6.1.1",
+    "eslint-plugin-react-refresh": "^0.4.22",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "vite": "^7.1.7"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}
