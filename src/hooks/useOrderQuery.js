@@ -8,14 +8,19 @@
 import { useRequest } from 'ahooks'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { fetchOrderList } from '../api/order'
+import { logUnexpectedError } from '../utils/errorLog'
 
 const DEFAULT_TAB = 'all'
 const DEFAULT_PAGE_SIZE = 10
 const EMPTY_LIST = []
 const EMPTY_FILTERS = { orderNo: '', memberName: '' }
 
-/** onError 兜底：真实错误提示由 axios 响应拦截器统一弹出，这里只负责吞掉 rejection */
-const swallowError = () => {}
+/**
+ * 真实错误提示由 axios 响应拦截器统一弹出，这里只负责吞掉 rejection。
+ * 但不能真的什么都不做：catch 若把编程错误（TypeError、读 undefined 属性）
+ * 一并吞掉，列表就会停在旧数据上且毫无痕迹。这里只上报预期外的错误。
+ */
+const onListError = (error) => logUnexpectedError(error, 'useOrderQuery.fetchOrderList')
 
 /** 过滤条件归一化：去掉首尾空格，避免「 张三 」查不到「张三」 */
 function normalizeFilters(filters = {}) {
@@ -94,7 +99,7 @@ export default function useOrderQuery() {
       refreshDeps: [query],
       // refresh() 会复用上一次的参数，所以这里显式用最新条件重新发起
       refreshDepsAction: () => run(query),
-      onError: swallowError,
+      onError: onListError,
     },
   )
 
