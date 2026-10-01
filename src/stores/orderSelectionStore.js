@@ -20,7 +20,7 @@ function toMap(rows) {
   return map
 }
 
-export const useOrderSelectionStore = create((set, get) => ({
+export const useOrderSelectionStore = create((set) => ({
   /** @type {Record<string, object>} */
   selectedMap: {},
 
@@ -35,8 +35,7 @@ export const useOrderSelectionStore = create((set, get) => ({
     }),
 
   /** 全选当前页（保留其它页的选择） */
-  addRows: (rows) =>
-    set((state) => ({ selectedMap: { ...state.selectedMap, ...toMap(rows) } })),
+  addRows: (rows) => set((state) => ({ selectedMap: { ...state.selectedMap, ...toMap(rows) } })),
 
   /** 取消勾选 */
   removeRows: (ids) =>

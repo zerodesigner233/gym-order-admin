@@ -27,15 +27,69 @@ const STATUS_CYCLE = [
 ]
 
 const SURNAMES = [
-  '赵', '钱', '孙', '李', '周', '吴', '郑', '王', '冯', '陈',
-  '褚', '卫', '蒋', '沈', '韩', '杨', '朱', '秦', '许', '何',
-  '吕', '施', '张', '孔', '曹', '严', '华', '金', '魏', '陶',
+  '赵',
+  '钱',
+  '孙',
+  '李',
+  '周',
+  '吴',
+  '郑',
+  '王',
+  '冯',
+  '陈',
+  '褚',
+  '卫',
+  '蒋',
+  '沈',
+  '韩',
+  '杨',
+  '朱',
+  '秦',
+  '许',
+  '何',
+  '吕',
+  '施',
+  '张',
+  '孔',
+  '曹',
+  '严',
+  '华',
+  '金',
+  '魏',
+  '陶',
 ]
 
 const GIVEN_NAMES = [
-  '嘉怡', '子轩', '浩然', '雨欣', '思远', '梦琪', '宇航', '佳明', '志强', '雅雯',
-  '俊杰', '欣怡', '博文', '诗涵', '天佑', '慧敏', '振宇', '若曦', '嘉豪', '静怡',
-  '文博', '梓萱', '睿渊', '欣然', '明轩', '乐瑶', '皓宇', '语彤', '哲瀚', '晨曦',
+  '嘉怡',
+  '子轩',
+  '浩然',
+  '雨欣',
+  '思远',
+  '梦琪',
+  '宇航',
+  '佳明',
+  '志强',
+  '雅雯',
+  '俊杰',
+  '欣怡',
+  '博文',
+  '诗涵',
+  '天佑',
+  '慧敏',
+  '振宇',
+  '若曦',
+  '嘉豪',
+  '静怡',
+  '文博',
+  '梓萱',
+  '睿渊',
+  '欣然',
+  '明轩',
+  '乐瑶',
+  '皓宇',
+  '语彤',
+  '哲瀚',
+  '晨曦',
 ]
 
 /**
@@ -159,14 +213,7 @@ function toDto(order) {
  * @returns {{ list: object[], total: number, page: number, pageSize: number }}
  */
 export function queryOrders(params = {}) {
-  const {
-    page = 1,
-    pageSize = 10,
-    tab = 'all',
-    orderNo = '',
-    memberName = '',
-    statuses,
-  } = params
+  const { page = 1, pageSize = 10, tab = 'all', orderNo = '', memberName = '', statuses } = params
 
   let filtered = orders.slice()
 
@@ -265,9 +312,10 @@ export function renewOrders(ids, years) {
   const updatedOrderNos = []
 
   targets.forEach((order) => {
-    const base = order.amount === null || order.amount === undefined
-      ? roundMoney(order.years * ANNUAL_PRICE)
-      : order.amount
+    const base =
+      order.amount === null || order.amount === undefined
+        ? roundMoney(order.years * ANNUAL_PRICE)
+        : order.amount
 
     order.years += Number(years)
     order.amount = roundMoney(base + fee)

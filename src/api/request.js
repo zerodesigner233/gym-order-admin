@@ -66,7 +66,12 @@ request.interceptors.response.use(
     const payload = response?.data
 
     // 统一处理业务错误：HTTP 200 但 code !== 0
-    if (payload && typeof payload === 'object' && typeof payload.code === 'number' && payload.code !== 0) {
+    if (
+      payload &&
+      typeof payload === 'object' &&
+      typeof payload.code === 'number' &&
+      payload.code !== 0
+    ) {
       const message = payload.message || '请求失败'
       toast.error(message)
       return Promise.reject(new BizError(message, payload.code, response))

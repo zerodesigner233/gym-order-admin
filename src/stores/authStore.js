@@ -8,7 +8,13 @@
 import { create } from 'zustand'
 import { login as loginRequest } from '../api/auth'
 import { navigateTo, setUnauthorizedHandler, toast } from '../utils/appBridge'
-import { clearAuthStorage, getStoredUser, getToken, setStoredUser, setToken } from '../utils/storage'
+import {
+  clearAuthStorage,
+  getStoredUser,
+  getToken,
+  setStoredUser,
+  setToken,
+} from '../utils/storage'
 
 export const useAuthStore = create((set, get) => ({
   token: getToken(),
@@ -32,8 +38,7 @@ export const useAuthStore = create((set, get) => ({
 
       return { ok: true, user }
     } catch (error) {
-      const message =
-        error?.response?.data?.message || error?.message || '登录失败，请稍后重试'
+      const message = error?.response?.data?.message || error?.message || '登录失败，请稍后重试'
       return { ok: false, message }
     }
   },

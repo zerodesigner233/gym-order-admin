@@ -62,8 +62,9 @@ function settle(response) {
   }
 
   const kind =
-    [AxiosError.ERR_BAD_REQUEST, AxiosError.ERR_BAD_RESPONSE][Math.floor(response.status / 100) - 4] ||
-    AxiosError.ERR_BAD_RESPONSE
+    [AxiosError.ERR_BAD_REQUEST, AxiosError.ERR_BAD_RESPONSE][
+      Math.floor(response.status / 100) - 4
+    ] || AxiosError.ERR_BAD_RESPONSE
 
   return Promise.reject(
     new AxiosError(
@@ -79,7 +80,8 @@ function settle(response) {
 function readToken(config) {
   const headers = config.headers
   if (!headers) return ''
-  const raw = typeof headers.get === 'function' ? headers.get('Authorization') : headers.Authorization
+  const raw =
+    typeof headers.get === 'function' ? headers.get('Authorization') : headers.Authorization
   return raw ? String(raw).replace(/^Bearer\s+/i, '') : ''
 }
 
@@ -178,12 +180,7 @@ function handleBatchRenew(config) {
 
   if (!ids.length) return buildErrorResponse(config, 400, '请先选择要续卡的订单', 40020)
   if (!Number.isInteger(years) || years < MIN_YEARS || years > MAX_YEARS) {
-    return buildErrorResponse(
-      config,
-      400,
-      `续卡年限需为 ${MIN_YEARS}~${MAX_YEARS} 的整数`,
-      40021,
-    )
+    return buildErrorResponse(config, 400, `续卡年限需为 ${MIN_YEARS}~${MAX_YEARS} 的整数`, 40021)
   }
 
   const result = renewOrders(ids, years)
@@ -224,9 +221,7 @@ export async function mockAdapter(config) {
   if (!PUBLIC_PATHS.has(pathname)) {
     const token = readToken(config)
     if (!token.startsWith(TOKEN_PREFIX)) {
-      return settle(
-        buildErrorResponse(config, 401, '登录状态已失效，请重新登录', 40100),
-      )
+      return settle(buildErrorResponse(config, 401, '登录状态已失效，请重新登录', 40100))
     }
   }
 
@@ -252,7 +247,9 @@ export async function mockAdapter(config) {
       return settle(handleBatchCancel(config))
     }
 
-    return settle(buildErrorResponse(config, 404, `模拟接口不存在: ${method.toUpperCase()} ${pathname}`, 40400))
+    return settle(
+      buildErrorResponse(config, 404, `模拟接口不存在: ${method.toUpperCase()} ${pathname}`, 40400),
+    )
   } catch (err) {
     if (err instanceof MockBizError) {
       return settle(buildErrorResponse(config, 400, err.message, err.code))
