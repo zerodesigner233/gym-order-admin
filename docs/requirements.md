@@ -290,7 +290,7 @@
 | 构建     | `npm run build`（Vite production build）                | 通过                                       |
 | 数据层   | `vite-node` 一次性脚本直接跑 mock，验证分页/筛选/写操作 | 通过                                       |
 | 需求审计 | 3 个独立 agent 逐条读源码取证                           | 查出 4 处问题，已修（第八节）              |
-| 端到端   | Playwright 真实点击全流程（**59 条断言**）              | **59/59 通过**，控制台 0 error / 0 warning |
+| 端到端   | Playwright 真实点击全流程（**60 条断言**）              | **60/60 通过**，控制台 0 error / 0 warning |
 
 端到端脚本 `e2e/qa.cjs` **已纳入版本管理**，随源码一起交付，可用 `npm run test:e2e` 复现
 （首次需 `npx playwright install chromium`）。截图与下载产物在 `e2e/shots`、`e2e/downloads`，已 gitignore。
