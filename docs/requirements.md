@@ -155,22 +155,22 @@
 
 ### Part 3　订单列表页
 
-| #    | 需求                                                             | 实现位置                                               | 结论            |
-| ---- | ---------------------------------------------------------------- | ------------------------------------------------------ | --------------- |
-| 3.1  | 5 个状态 Tab；「进行中」= 待审核+待制卡+待寄卡；切 Tab 回第 1 页 | `src/constants/order.js`、`src/hooks/useOrderQuery.js` | ✅              |
-| 3.2  | 订单号精确匹配、会员姓名模糊匹配                                 | `src/mock/server.js`                                   | ✅              |
-| 3.3  | 7 列表格                                                         | `src/pages/OrderList/index.jsx`                        | ✅              |
-| 3.4  | 状态 Tag 一状态一颜色                                            | `src/constants/order.js`                               | ✅              |
-| 3.5  | 默认「最新创建的订单显示在最前面」                               | `src/mock/server.js`                                   | ⚠️ 见下方说明 A |
-| 3.6  | 千分位；`0` 显示 `0.00`；空值不显示为 `0.00`                     | `src/utils/money.js`                                   | ✅              |
-| 3.7a | 仅「已到期」可续卡                                               | `src/constants/order.js`、`src/mock/server.js`         | ✅              |
-| 3.7b | 选中含不合规记录时，提示**列出订单号**                           | `src/pages/OrderList/index.jsx`                        | ✅              |
-| 3.7c | 续卡年限必填、1~10 整数、**实时**显示费用、≥5 年 8 折            | `src/pages/OrderList/components/RenewModal.jsx`        | ✅              |
-| 3.7d | 成功后**年限累加**且状态 → 待审核                                | `src/mock/server.js`                                   | ✅              |
-| 3.8a | 仅「待制卡」「待寄卡」可撤单                                     | `src/constants/order.js`、`src/mock/server.js`         | ✅              |
-| 3.8b | 二次确认且确认框**列出订单号**                                   | `src/pages/OrderList/index.jsx`                        | ✅              |
-| 3.8c | 撤单后状态 → 已取消                                              | `src/mock/server.js`                                   | ✅              |
-| 3.9  | 行内「续卡」按钮仅「已到期」行显示，逻辑同批量                   | `src/pages/OrderList/index.jsx`                        | ✅              |
+| #    | 需求                                                             | 实现位置                                               | 结论                  |
+| ---- | ---------------------------------------------------------------- | ------------------------------------------------------ | --------------------- |
+| 3.1  | 5 个状态 Tab；「进行中」= 待审核+待制卡+待寄卡；切 Tab 回第 1 页 | `src/constants/order.js`、`src/hooks/useOrderQuery.js` | ✅                    |
+| 3.2  | 订单号精确匹配、会员姓名模糊匹配                                 | `src/mock/server.js`                                   | ✅                    |
+| 3.3  | 7 列表格                                                         | `src/pages/OrderList/index.jsx`                        | ✅                    |
+| 3.4  | 状态 Tag 一状态一颜色                                            | `src/constants/order.js`                               | ✅                    |
+| 3.5  | 默认「最新创建的订单显示在最前面」                               | `src/mock/server.js`                                   | ⚠️ 见下方说明 A       |
+| 3.6  | 千分位；`0` 显示 `0.00`；空值不显示为 `0.00`                     | `src/utils/money.js`                                   | ✅                    |
+| 3.7a | 仅「已到期」可续卡                                               | `src/constants/order.js`、`src/mock/server.js`         | ✅                    |
+| 3.7b | 选中含不合规记录时，提示**列出订单号**                           | `src/pages/OrderList/index.jsx`                        | ✅                    |
+| 3.7c | 续卡年限必填、1~10 整数、**实时**显示费用、≥5 年 8 折            | `src/pages/OrderList/components/RenewModal.jsx`        | ✅                    |
+| 3.7d | 成功后**年限累加**且状态 → 待审核                                | `src/mock/server.js`                                   | ✅ 金额累加基准见 A.4 |
+| 3.8a | 仅「待制卡」「待寄卡」可撤单                                     | `src/constants/order.js`、`src/mock/server.js`         | ✅                    |
+| 3.8b | 二次确认且确认框**列出订单号**                                   | `src/pages/OrderList/index.jsx`                        | ✅                    |
+| 3.8c | 撤单后状态 → 已取消                                              | `src/mock/server.js`                                   | ✅                    |
+| 3.9  | 行内「续卡」按钮仅「已到期」行显示，逻辑同批量                   | `src/pages/OrderList/index.jsx`                        | ✅                    |
 
 ### Part 4　新建订单页
 
@@ -223,6 +223,31 @@
 ### A.3 状态导出白名单（Part 5 模糊需求的假设）
 
 业务方只说「有些状态的订单不能随便导出的，具体哪些你看着办」。我采用的假设与理由见 `README.md` 5.3；实现上导出前会提示被排除的订单号。
+
+### A.4 种子订单 `amount` 为 `null` 时，续卡的金额累加基准
+
+需求 3.7d 只写了「成功后年限累加」，没有规定金额怎么累加；而种子数据里有一部分订单的 `amount`
+是 `null`（见 `README.md` 4.2 —— 需求同时要求「0 要显示 0.00」和「接口偶尔返回空值」，
+于是刻意留了空值来验证容错）。此时若直接 `order.amount + fee`，`null + 3600` 会得到 `3600`，
+等于**把此前年度的费用凭空抹掉**。
+
+因此 `mock/db.js` 的 `renewOrders` 采用回填口径：
+
+```js
+const base =
+  order.amount === null || order.amount === undefined
+    ? roundMoney(order.years * ANNUAL_PRICE) // 空金额按「原年限 × 1200」回填
+    : order.amount
+order.years += Number(years)
+order.amount = roundMoney(base + fee)
+```
+
+举例：一条 1 年期、`amount = null` 的已到期订单续卡 3 年 →
+年限 `1 + 3 = 4`，金额 `1×1200 = 1200` 起算，`1200 + 3600 = 4800`。
+
+**注意**：这不违背需求 3.6 —— 3.6 约束的是**展示**（空值不显示成 `0.00`），
+而这里是**写路径**必须给出一个确定的金额基准，否则历史费用会丢失。
+此处若按 `null + fee` 实现，虽然能通过「状态与年限是否变化」的断言，但金额是错的。
 
 ---
 

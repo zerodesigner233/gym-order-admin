@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "健身房会员办卡订单管理模块 - 前端工程师笔试题",
+  "description": "健身房会员办卡订单管理模块 - 前端工程师笔试题（React 18 + Vite 7 + antd v5 单页应用）",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -40,5 +40,9 @@
   },
   "engines": {
     "node": ">=20.19.0"
+  },
+  "keywords": {
+    "name": "gym-order-admin",
+    "description": "Gym membership card order management admin SPA (React 18 + Vite 7 + antd v5)"
   }
 }

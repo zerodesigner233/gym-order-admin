@@ -1,9 +1,18 @@
 # 健身房会员办卡订单管理模块
 
+> 仓库名：**`gym-order-admin`**
+> 简介：Gym membership card order management admin SPA — a front-end take-home exercise
+> covering the full membership-card order lifecycle: 待审核 → 待制卡 → 待寄卡 → 已完成,
+> plus the branch states 已到期 (expired, not renewed) and 已取消 (cancelled by customer).
+
 连锁健身房「会员办卡订单」管理后台的前端实现，用于跟进会员办卡订单的全生命周期：
 **待审核 → 待制卡 → 待寄卡 → 已完成**，以及分支态 **已到期**（卡到期未续费）与 **已取消**（客户撤单）。
 
 技术栈：React 18 + Vite 7 + react-router v7 + antd v5 + axios + zustand + dayjs + ahooks（JavaScript，ESLint + Prettier）。
+
+一句话概括：这是一个**纯前端**项目 —— 「模拟后端」以自定义 axios adapter 实现，跑在 axios 主流程
+（请求拦截器 → adapter → 响应拦截器）之内，因此 token 注入、统一错误与 401 处理等真实链路都能被完整验证；
+接真实后端时只需删掉 `src/api/request.js` 里 `adapter: mockAdapter` 一行，业务代码零改动。
 
 ---
 
@@ -383,7 +392,7 @@ while (orders.some((o) => o.orderNo === orderNo)) {
 | **vite-node**                             | 写一次性脚本脱离浏览器直接跑 mock 数据层，验证分页 / 筛选 / 写操作（第四节 4.1 就是靠它定位的）                                                                            |
 | **Chrome DevTools**                       | 检查 localStorage 中的 token、Network 面板确认拦截器链路                                                                                                                   |
 | **Playwright（浏览器自动化）**            | 端到端自测：登录 → Tab 切换 → 搜索 → 批量续卡 → 撤单 → 导出 CSV → 新建订单 → 路由守卫，并截图留证。脚本已纳入版本管理（`e2e/qa.cjs`，`npm run test:e2e`），当前 59/59 通过 |
-| **AI 编码助手（Claude Code / OpenCode）** | 脚手架与基础设施层实现、页面代码生成、代码走查与自检、README 撰写。**如实说明：本项目的代码由 AI 辅助编写**，需求拆解、架构取舍、假设判断与最终验证由人确认                |
+| **AI 编码助手（Claude Code）** | 脚手架与基础设施层实现、页面代码生成、代码走查与自检、README 撰写。**如实说明：本项目的代码由 AI 辅助编写**，需求拆解、架构取舍、假设判断与最终验证由人确认                |
 | **Git**                                   | 按正常工作节奏分多次提交（脚手架 → 页面 → 文档）                                                                                                                           |
 
 ---
