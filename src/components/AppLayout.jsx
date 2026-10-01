@@ -7,7 +7,7 @@ import {
   PlusSquareOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Avatar, Breadcrumb, Button, Dropdown, Layout, Menu, Typography, theme } from 'antd'
+import { Avatar, Breadcrumb, Button, Dropdown, Layout, Menu, Tag, Typography, theme } from 'antd'
 import { useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
@@ -18,6 +18,10 @@ const MENU_ITEMS = [
   { key: '/orders', icon: <FileTextOutlined />, label: '订单列表' },
   { key: '/orders/new', icon: <PlusSquareOutlined />, label: '新建订单' },
 ]
+
+const ROLE_LABEL = {
+  admin: '管理员',
+}
 
 const BREADCRUMB_MAP = {
   '/orders': ['订单管理', '订单列表'],
@@ -45,7 +49,10 @@ export default function AppLayout() {
     return titles.map((title) => ({ title }))
   }, [location.pathname])
 
-  const displayName = user?.nickname || user?.username || '未登录'
+  // 需求要求顶栏展示「当前登录用户名」，所以这里用 username 原样展示；
+  // 角色用独立 Tag 呈现，不混进用户名字符串（mock 的 nickname 是 `${username}（管理员）`）
+  const displayName = user?.username || '未登录'
+  const roleLabel = ROLE_LABEL[user?.role]
 
   const handleMenuClick = ({ key }) => navigate(key)
 
@@ -127,6 +134,7 @@ export default function AppLayout() {
             <Button type="text" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Avatar size={22} icon={<UserOutlined />} style={{ background: '#1677ff' }} />
               <Typography.Text>{displayName}</Typography.Text>
+              {roleLabel && <Tag style={{ marginInlineEnd: 0 }}>{roleLabel}</Tag>}
             </Button>
           </Dropdown>
         </Header>

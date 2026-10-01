@@ -45,6 +45,12 @@ function toExportRow(order) {
  */
 const MAX_EXPORT_ROWS = 5000
 
+/**
+ * 提示里最多列出多少个被排除的订单号。
+ * 需求只要求「提示中需列出订单号」，不要求全量列出；全量拼接在命中几百条时不可读。
+ */
+const EXCLUDED_PREVIEW = 8
+
 export default function ExportButton({ tab, filters, tabLabel }) {
   const { message } = App.useApp()
   const [exporting, setExporting] = useState(false)
@@ -67,18 +73,29 @@ export default function ExportButton({ tab, filters, tabLabel }) {
         return
       }
 
+      // 排除清单必须限量：命中几百条时把订单号全量拼进提示会变成不可读的长文本
+      const excludedHint = excluded.length
+        ? `已跳过 ${excluded.length} 笔不可导出的订单（待审核 / 已取消）：` +
+          excluded
+            .slice(0, EXCLUDED_PREVIEW)
+            .map((order) => order.orderNo)
+            .join('、') +
+          (excluded.length > EXCLUDED_PREVIEW
+            ? ` 等 ${excluded.length} 笔（完整清单请缩小筛选范围后查看）`
+            : '')
+        : ''
+
       if (exportable.length > MAX_EXPORT_ROWS) {
+        // 超限时也要说明排除了什么，否则用户只看到「超限」却不知道口径
         message.error(
-          `命中 ${exportable.length} 条，超过单次导出上限 ${MAX_EXPORT_ROWS} 条，请缩小筛选范围后重试`,
+          `命中 ${exportable.length} 条可导出订单，超过单次导出上限 ${MAX_EXPORT_ROWS} 条，` +
+            `请缩小筛选范围后重试${excludedHint ? `；${excludedHint}` : ''}`,
         )
         return
       }
 
-      if (excluded.length) {
-        message.warning(
-          `已跳过 ${excluded.length} 笔不可导出的订单（待审核 / 已取消）：` +
-            excluded.map((order) => order.orderNo).join('、'),
-        )
+      if (excludedHint) {
+        message.warning(excludedHint)
       }
 
       const rows = exportable.map(toExportRow)

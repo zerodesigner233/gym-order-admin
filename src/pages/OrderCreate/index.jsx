@@ -59,7 +59,17 @@ export default function OrderCreate() {
             extra="2~30 个字符，支持中英文"
             rules={[
               { required: true, whitespace: true, message: '请输入会员姓名' },
-              { min: 2, max: 30, message: '会员姓名长度需为 2~30 个字符' },
+              {
+                // 按 trim 后的长度校验，与 mock 服务端（server.js 先 trim 再判 2~30）保持一致。
+                // 否则 " a " 这类输入客户端判定长度 3 放行、服务端 trim 后判 1 拒绝，前端直接弹 400。
+                validator: (_rule, value) => {
+                  if (isBlankValue(value)) return Promise.resolve()
+                  const len = String(value).trim().length
+                  return len >= 2 && len <= 30
+                    ? Promise.resolve()
+                    : Promise.reject(new Error('会员姓名长度需为 2~30 个字符'))
+                },
+              },
             ]}
           >
             <Input placeholder="请输入会员姓名" maxLength={30} showCount allowClear />

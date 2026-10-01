@@ -113,7 +113,7 @@ export default function Login() {
             <Form.Item
               name="password"
               label="密码"
-              rules={[{ required: true, min: 4, message: '密码至少 4 位' }]}
+              rules={[{ required: true, whitespace: true, message: '请输入密码' }]}
             >
               <Input.Password
                 prefix={<LockOutlined />}
