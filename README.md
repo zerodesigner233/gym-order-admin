@@ -462,3 +462,15 @@ IndexedDB 必须把那几个函数的返回值异步化。**所以「接口签�
 1. `utils/money.js` —— `null` / `0` / 负数 / 超大数（4.2 记录的 `null` 与 `0` 的坑值得锁死）
 2. `constants/order.js` 的 `calcRenewAmount` —— 4 年（无折扣）与 5 年（8 折）的边界
 3. `utils/csv.js` —— 逗号 / 引号 / 换行 / 公式注入转义
+
+上面三条都是**纯函数**。`useOrderQuery` 的「页码越界」处理**不满足**这个标准，因此按当前文档口径它属于**不补自动化测试**的合理范畴：
+
+- 不是纯函数 —— 它依赖 `useRequest`、refs 与渲染时序；
+- 边界不是数值而是**时序**（两个 `await` 之间不出现中间态），端到端脚本对这种一帧闪烁天生不可靠：
+  写过一条 E2E 试图覆盖，实测三次因选择器歧义与前序状态耦合而返工，最终删除；
+- 且它**不是需求项** —— `docs/requirements.md` 的 3.1~3.9 唯一涉及页码的是「切 Tab 回第 1 页」，已由 04f 覆盖。
+
+补它的正确形态是引入测试运行器（vitest + jsdom）做 hook 单测，但那会新增依赖与一层验证基建，
+超出 `requirements.md` 第九节固定的五档验证方式（lint / format:check / build / vite-node / Playwright），故本次不做。
+代码里的处理方式是：clamp 在**同一个 `requestSeqRef` 内重取**一次，先写 `total` 再写 `list`，
+由同一个 `try/finally` 关闭 loading —— 不把状态交接给「未来的请求」，因此不依赖后续请求是否真会到来。
