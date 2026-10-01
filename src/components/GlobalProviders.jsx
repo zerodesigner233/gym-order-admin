@@ -18,7 +18,9 @@ export default function GlobalProviders({ children }) {
   const location = useLocation()
 
   useEffect(() => {
-    bindToast(message)
+    // 传入 { message } 而不是裸的 message 实例：
+    // appBridge 的 toast.* 约定从绑定对象上取 .message，直接绑定实例会取到 undefined
+    bindToast({ message })
   }, [message])
 
   useEffect(() => {
