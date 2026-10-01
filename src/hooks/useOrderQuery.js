@@ -68,20 +68,32 @@ export default function useOrderQuery() {
       requestSeqRef.current = seq
       setLoading(true)
       try {
-        const response = await fetchOrderList(params)
+        let response = await fetchOrderList(params)
 
         // 乱序保护：慢响应晚到时直接丢弃，绝不覆盖更新的数据
         if (seq !== requestSeqRef.current) return { seq, dropped: true }
 
-        const data = response?.data?.data
-        const nextList = data?.list ?? EMPTY_LIST
-        const nextTotal = data?.total ?? 0
+        let data = response?.data?.data
+        let nextList = data?.list ?? EMPTY_LIST
+        let nextTotal = data?.total ?? 0
+        let currentPage = params.page
 
         // 当前页越界（例如续卡后订单已不属于当前 Tab）：退回最后一页重新取数
         const maxPage = Math.max(1, Math.ceil(nextTotal / params.pageSize))
-        if (params.page > maxPage) {
-          setPageState(maxPage)
-          return { seq, clamped: true }
+        if (currentPage > maxPage) {
+          const fixedPage = maxPage
+          // 先把 total 写进去，避免 total 长时间停在旧值或 0
+          setTotal(nextTotal)
+          // 同一 seq 内重取修正后的页码：避免依赖外部 setPageState 触发的新请求，
+          // 从而消除「旧数据一闪 + loading 关闭时机不确定」这个 NIT
+          response = await fetchOrderList({ ...params, page: fixedPage })
+          if (seq !== requestSeqRef.current) return { seq, dropped: true }
+          data = response?.data?.data
+          nextList = data?.list ?? EMPTY_LIST
+          nextTotal = data?.total ?? 0
+          currentPage = fixedPage
+          // 将页码状态同步到最新的修正页
+          setPageState(fixedPage)
         }
 
         setList(nextList)
