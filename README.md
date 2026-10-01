@@ -52,7 +52,7 @@ npm run test:e2e                  # 真实点击跑全流程，产物在 e2e/sho
 ├── docs/
 │   └── requirements.md            # 试题要求原文 + 逐条需求符合性自查表
 ├── e2e/
-│   └── qa.cjs                     # 端到端自测脚本（Playwright，真实点击，60 条断言）
+│   └── qa.cjs                     # 端到端自测脚本（Playwright，真实点击，61 条断言）
 └── src/
     ├── main.jsx                   # 应用入口：ConfigProvider(zh_CN) + AntdApp + BrowserRouter + GlobalProviders
     ├── App.jsx                    # 路由表 + 页面级懒加载
@@ -201,6 +201,21 @@ Object.entries(config.params || {}).forEach(([key, value]) => {
 只有真正有值的数字才走 `toLocaleString('zh-CN', { minimumFractionDigits: 2 })`；`0` 走到格式化分支自然得到 `0.00`。
 导出的 CSV 则用另一个开关让空值落成**空单元格**（而不是 `-` 或 `0.00`），同样是为了不让财务把「未知」当成「零」。
 
+**补充（复查时才发现的同一个坑）**：上面这个 `isBlank` 守卫当初只加在了**显示层**，
+**定价函数** `calcCreateAmount` / `calcRenewAmount` 只写了 `if (!Number.isFinite(Number(years))) return null`。
+但 `Number.isFinite` 只挡得住 `NaN` 和 `±Infinity` —— `Number(null)` 和 `Number('')` 都等于 `0`，
+于是「年限被清空」会被当成「0 年」，续卡弹窗显示 `¥0.00`（看起来像免费续卡）。
+同一屏里还会出现 `原价 ¥-` 挨着 `应付费用 ¥0.00` 的自相矛盾，因为前者走 `formatMoney`、后者不走。
+连带两处也一并修了：
+
+- 两个定价函数补 `isBlank` 前置守卫，合法数值行为不变（已用 `vite-node` 逐值核对 1/2/3/4/5/6/10）
+- 弹窗合计 `roundMoney(feePerOrder * orders.length)` 在 `feePerOrder` 为 `null` 时会算出 `0`（`null * n === 0`），
+  改为 `isBlank(feePerOrder) ? null : ...`，让合计与单笔统一显示 `-`
+
+回归断言 07f2 锁住「清空年限 → 金额显示 `-` 而非 `¥0.00`」。
+这条也说明了一个通用原则：**空值守卫要加在数据产生处，不能只加在渲染处** ——
+只挡住显示，错误会从计算结果里继续流向下游。
+
 ### 4.3 拦截器/store/组件之间的循环依赖
 
 axios 响应拦截器要「清登录态 + 跳登录页 + 弹提示」，这三件事分别住在 `authStore`、`react-router`、`antd` 里。
@@ -306,7 +321,8 @@ while (orders.some((o) => o.orderNo === orderNo)) {
   升序会把最旧的放最前。这里按**明确表达的意图**实现为**倒序（最新在前）**，并在常量处加了注释说明。
 - **catch 里的错误该记到哪一层**：`catch` 会把**所有**异常一并吞掉，包括我们自己代码里的 TypeError
   （读 undefined 的属性、对 null 直接 `.map`）。这类错误既没人提示、也几乎没有别的暴露途径，
-  一旦发生就表现为「点了没反应」的灵异 bug。所以页面层的空 `catch` 统一走 `utils/errorLog.js`：
+  一旦发生就表现为「点了没反应」的灵异 bug。所以页面层的空 `catch` 与 `useOrderQuery` 的
+  `onError` 统一走 `utils/errorLog.js`：
   **预期内**的失败（业务码非 0、HTTP 4xx/5xx、超时、断网）已经被响应拦截器弹过提示，静默兜住即可；
   只有**预期外**的错误才落 `console.error` 并带上出错位置。
   顺带一个反直觉的点：校验失败不能和提交失败共用一个 `catch` ——
@@ -439,7 +455,7 @@ IndexedDB 必须把那几个函数的返回值异步化。**所以「接口签�
 ### 8.3 测试债
 
 **L6 · 未写单元测试。** 质量目前靠「mock 层用 vite-node 脚本验证 + Playwright 端到端点击验证」保证，
-其中端到端脚本已提交到 `e2e/qa.cjs`（`npm run test:e2e`，60 条断言，随源码一起交付以保证结论可复现）。
+其中端到端脚本已提交到 `e2e/qa.cjs`（`npm run test:e2e`，61 条断言，随源码一起交付以保证结论可复现）。
 
 若要补，按「纯函数 + 边界值明确 + 当前无自动化覆盖」排序：
 
