@@ -410,7 +410,7 @@ function parseCsvLine(line) {
     await waitLoading(page)
     await page.waitForTimeout(400)
     const no = norm(await cell(page, 0, 0))
-    assert(/^GM\d+$/.test(no), `读到���订单号=${no}`)
+    assert(/^GM\d+$/.test(no), `读到的订单号=${no}`)
     await (await searchInput('订单号')).fill(no)
     await clickButton(page, '查询')
     await waitLoading(page)
@@ -718,7 +718,7 @@ function parseCsvLine(line) {
     const zeros = body.filter((c) => c[a] === '0.00').length
     assert(
       blanks === 2,
-      `空金额单元格应�� 2 条（种子数据 4 条 null 中 2 条可导出），实际=${blanks}`,
+      `空金额单元格应为 2 条（种子数据 4 条 null 中 2 条可导出），实际=${blanks}`,
     )
     assert(zeros === 3, `0.00 单元格应有 3 条（活动赠送卡），实际=${zeros}`)
     assert(body.length === 24, `可导出应为 24 条（36 - 待审核6 - 已取消6），实际=${body.length}`)
@@ -863,6 +863,55 @@ function parseCsvLine(line) {
     assert(times[0] >= times[1], `排序异常 ${times}`)
     return `第一行 ${first[0]} / ${first[nc]} / ${first[sc]} / ${first[tc]}，共 37 条`
   })
+
+  await check('10g 同一天连续新建的订单号必须唯一（且各自可精确匹配）', async () => {
+    // 回归用例：createOrder 曾拿「不带 GM 前缀的 datePart」去 startsWith 匹配 orderNo，
+    // 永远为 false -> 当天新建的每一笔都拿到 GM{date}0001，精确匹配会一次命中多条，违反需求 3.2。
+    //
+    // 必须走左侧菜单的客户端路由跳转，不能用 page.goto：模拟数据在浏览器内存里，
+    // 整页刷新会重置为 36 条种子数据，那样第二笔又从 0001 起算，
+    // 测到的就成了「各自刷新后新建」而不是「同一天连续新建」。
+    const created = []
+    for (const [i, name] of ['E2E唯一性验证A', 'E2E唯一性验证B'].entries()) {
+      await page.locator('.ant-menu-item').filter({ hasText: '新建订单' }).click()
+      await page.waitForURL('**/orders/new', { timeout: 20000 })
+      await page.waitForTimeout(700)
+      await page.getByPlaceholder('请输入会员姓名').fill(name)
+      await page.getByPlaceholder(/手机号/).fill(`1380013800${i + 1}`)
+      await page
+        .locator('.ant-input-number-input')
+        .first()
+        .fill(String(i + 2))
+      await page.locator('.ant-input-number-input').first().press('Tab')
+      await page.locator('textarea').first().fill(`验证同一天订单号唯一 ${i}`)
+      await page.waitForTimeout(300)
+      await clickButton(page, '提交')
+      await page.waitForURL('**/orders', { timeout: 20000 })
+      await waitLoading(page)
+      await page.waitForTimeout(800)
+      // 建完立刻记下订单号：此时它就是列表首行（按创建时间倒序）
+      created.push(norm(await cell(page, 0, 0)))
+    }
+
+    const t = await totalText(page)
+    assert(/共39条/.test(t), `列表应为 39 条（36 种子 + 10f 1 笔 + 本用例 2 笔），实际=${t}`)
+    created.forEach((no) => assert(/^GM\d+$/.test(no), `订单号格式异常=${no}`))
+    assert(created[0] !== created[1], `同一天连续新建却得到相同订单号：${created.join(' / ')}`)
+
+    // 关键断言：两个订单号各自精确匹配都必须只命中 1 条
+    for (const no of created) {
+      await (await searchInput('订单号')).fill(no)
+      await clickButton(page, '查询')
+      await waitLoading(page)
+      await page.waitForTimeout(500)
+      const tt = await totalText(page)
+      assert(/共1条/.test(tt), `${no} 精确匹配应只命中 1 条，实际=${tt}`)
+    }
+    await clickButton(page, '重置')
+    await waitLoading(page)
+    return `同一天连续新建 ${created.join(' / ')}，各自精确匹配均为 1 条`
+  })
+
   await shot(page, 'after-create')
 
   /* ============================================================ 11 404 / 退出 */

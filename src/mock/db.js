@@ -264,11 +264,21 @@ export function queryAllOrders(params = {}) {
 export function createOrder(payload) {
   const now = new Date()
   const datePart = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`
-  const seq = orders.filter((o) => o.orderNo.startsWith(datePart)).length + 1
+  const prefix = `GM${datePart}`
+
+  // 序号按「当天已有多少笔」来推。必须带 GM 前缀匹配：orderNo 形如 GM202610020001，
+  // 若直接拿 datePart 去 startsWith 永远为 false，会让当天新建的每一笔都拿到 GM{date}0001。
+  // 再用 while 兜一次底，避免历史数据里已有空洞时撞号。
+  let seq = orders.filter((o) => o.orderNo.startsWith(prefix)).length + 1
+  let orderNo = `${prefix}${pad(seq, 4)}`
+  while (orders.some((o) => o.orderNo === orderNo)) {
+    seq += 1
+    orderNo = `${prefix}${pad(seq, 4)}`
+  }
 
   const order = {
     id: `o_${Date.now().toString(36)}_${Math.floor(Math.random() * 1e6).toString(36)}`,
-    orderNo: `GM${datePart}${pad(seq, 4)}`,
+    orderNo,
     memberName: payload.memberName.trim(),
     phone: payload.phone.trim(),
     years: Number(payload.years),
