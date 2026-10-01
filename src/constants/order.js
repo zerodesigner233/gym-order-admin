@@ -3,6 +3,8 @@
  * 集中放在一处，避免状态字面量散落在各个组件里。
  */
 
+import { isBlank } from '../utils/money'
+
 /** 订单状态枚举（与后端约定的 code） */
 export const OrderStatus = {
   /** 待审核 */
@@ -88,6 +90,10 @@ export const MAX_YEARS = 10
 
 /** 新建订单费用：年限 × 1200（无折扣） */
 export function calcCreateAmount(years) {
+  // 必须先判空再 Number()：Number(null) 和 Number('') 都等于 0，
+  // 只靠 isFinite 守卫会把「年限未填」当成「0 年」，让费用显示成 ¥0.00
+  // 而非「未知」（同 README 4.2 记录的 null 与 0 那个坑）。
+  if (isBlank(years)) return null
   const n = Number(years)
   if (!Number.isFinite(n)) return null
   return roundMoney(n * ANNUAL_PRICE)
@@ -101,6 +107,7 @@ export function hasRenewDiscount(years) {
 
 /** 续卡费用：年限 × 1200；满 5 年按 8 折 */
 export function calcRenewAmount(years) {
+  if (isBlank(years)) return null
   const n = Number(years)
   if (!Number.isFinite(n)) return null
   const gross = n * ANNUAL_PRICE

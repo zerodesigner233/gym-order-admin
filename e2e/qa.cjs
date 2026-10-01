@@ -584,6 +584,32 @@ function parseCsvLine(line) {
     return '3 × 3,600.00 = 10,800.00'
   })
 
+  await check('07f2 清空年限 → 金额显示「-」而非 ¥0.00', async () => {
+    // 回归：calcCreateAmount / calcRenewAmount 曾只用 !isFinite 守卫，而
+    // Number(null) === 0 且 Number('') === 0，于是「年限未填」被当成「0 年」，
+    // 弹窗显示 ¥0.00（看起来像免费续卡）；合计 null * n === 0 也会跟着错。
+    const inp = page.locator('.ant-modal-content input').first()
+    let detail = ''
+    try {
+      await inp.fill('')
+      await page.waitForTimeout(600)
+      const m = await modalText(page)
+      assert(!/¥0\.00/.test(m), `清空年限后不应出现 ¥0.00：${m.slice(0, 300)}`)
+      assert(/应付费用（每笔）¥-/.test(m), `单笔费用应为「-」：${m.slice(0, 300)}`)
+      assert(/合计¥-/.test(m), `合计应为「-」：${m.slice(0, 300)}`)
+      detail = '清空 → 单笔/合计均为「-」'
+    } finally {
+      // 复原必须放在 finally：断言抛异常时若不还原，弹窗会停留在「空年限」状态，
+      // 后面 07g~08d 会连环失败，把 1 个真实错因放大成 7 条噪声。
+      await inp.fill('3')
+      await inp.press('Tab')
+      await page.waitForTimeout(500)
+    }
+    const m2 = await modalText(page)
+    assert(/合计¥10,800\.00/.test(m2), `复原 3 年后合计应回到 10,800.00：${m2.slice(0, 300)}`)
+    return `${detail}；复原 3 年 → ¥10,800.00`
+  })
+
   await check('07g 提交续卡：已到期 6→3，进行中 18→21', async () => {
     await clickButton(page, '确认续卡')
     await page.waitForTimeout(2000)

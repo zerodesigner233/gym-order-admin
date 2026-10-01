@@ -16,7 +16,7 @@ import {
   roundMoney,
 } from '../../../constants/order'
 import { logUnexpectedError } from '../../../utils/errorLog'
-import { formatMoney } from '../../../utils/money'
+import { formatMoney, isBlank } from '../../../utils/money'
 
 const { Text } = Typography
 
@@ -46,7 +46,11 @@ export default function RenewModal({
   const feePerOrder = calcRenewAmount(years)
   const grossPerOrder = calcCreateAmount(years)
   const discounted = hasRenewDiscount(years)
-  const total = roundMoney(feePerOrder * orders.length)
+  // feePerOrder 可能是 null（年限被清空），此时不能参与乘法：
+  // null * n === 0 会让合计显示成 ¥0.00，与单笔显示的「-」自相矛盾。
+  const total = isBlank(feePerOrder) ? null : roundMoney(feePerOrder * orders.length)
+  // 年限被清空时 antd 的 onChange 会传 null，直接渲染 {years} 会变成「原价（ 年 × …）」
+  const yearsLabel = isBlank(years) ? '-' : years
 
   const handleOk = async () => {
     // 校验与提交刻意分成两段。validateFields 失败时抛出的是 { errorFields } 普通对象
@@ -135,7 +139,7 @@ export default function RenewModal({
           <Flex vertical gap={4}>
             <Flex justify="space-between" align="baseline" gap={12}>
               <Text type="secondary">
-                原价（{years} 年 × ¥{ANNUAL_PRICE}）
+                原价（{yearsLabel} 年 × ¥{ANNUAL_PRICE}）
               </Text>
               <Text type={discounted ? 'secondary' : undefined} delete={discounted}>
                 ¥{formatMoney(grossPerOrder)}
