@@ -15,6 +15,7 @@ import {
   hasRenewDiscount,
   roundMoney,
 } from '../../../constants/order'
+import { logUnexpectedError } from '../../../utils/errorLog'
 import { formatMoney } from '../../../utils/money'
 
 const { Text } = Typography
@@ -48,12 +49,17 @@ export default function RenewModal({
   const total = roundMoney(feePerOrder * orders.length)
 
   const handleOk = async () => {
+    // 校验与提交刻意分成两段。validateFields 失败时抛出的是 { errorFields } 普通对象
+    // 而不是 Error，若和提交失败共用一个 catch，会被 logUnexpectedError 误判成
+    // 「预期外的错误」写进控制台，污染端到端用例的 0 console error 断言。
+    const values = await form.validateFields().catch(() => null)
+    if (!values) return
+
     try {
-      const values = await form.validateFields()
       await onSubmit(values.years)
-    } catch {
-      // 校验未通过由 antd 在字段下方提示；提交失败由 axios 响应拦截器统一提示，
-      // 这里不再重复提示，保留弹窗方便用户修改后重试
+    } catch (error) {
+      // 请求失败由 axios 响应拦截器统一提示，这里不再重复提示，保留弹窗方便用户修改后重试
+      logUnexpectedError(error, 'RenewModal.handleOk')
     }
   }
 

@@ -41,6 +41,7 @@ import {
   selectSelectedRows,
   useOrderSelectionStore,
 } from '../../stores/orderSelectionStore'
+import { logUnexpectedError } from '../../utils/errorLog'
 import { formatMoney, toMoneyCell } from '../../utils/money'
 import ExportButton from './components/ExportButton'
 import RenewModal from './components/RenewModal'
@@ -271,8 +272,9 @@ export default function OrderList() {
       clearSelection()
       // 续卡后订单会离开「已到期」Tab，必须重新拉列表（页码越界由 useOrderQuery 兜底）
       reload()
-    } catch {
+    } catch (error) {
       // 请求失败由 axios 响应拦截器统一提示，这里不再重复提示，保留弹窗方便重试
+      logUnexpectedError(error, 'OrderList.handleBatchRenew')
     } finally {
       setRenewing(false)
     }
@@ -302,8 +304,9 @@ export default function OrderList() {
       message.success(`撤单成功 ${result?.successCount ?? 0} 笔`)
       clearSelection()
       reload()
-    } catch {
+    } catch (error) {
       // 请求失败由 axios 响应拦截器统一提示，confirm 弹窗会自动关闭
+      logUnexpectedError(error, 'OrderList.handleBatchCancel')
     }
   }
 

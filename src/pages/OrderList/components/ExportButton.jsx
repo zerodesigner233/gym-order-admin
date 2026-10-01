@@ -11,6 +11,7 @@ import { useState } from 'react'
 import { fetchAllOrdersForExport } from '../../../api/order'
 import { EXPORTABLE_STATUSES, ORDER_STATUS_LABEL, formatDateTime } from '../../../constants/order'
 import { buildCsvFilename, exportToCsv } from '../../../utils/csv'
+import { logUnexpectedError } from '../../../utils/errorLog'
 import { formatMoney, isBlank } from '../../../utils/money'
 
 const EXPORT_COLUMNS = [
@@ -105,8 +106,9 @@ export default function ExportButton({ tab, filters, tabLabel }) {
         rows,
       })
       message.success(`已导出 ${rows.length} 条订单记录`)
-    } catch {
+    } catch (error) {
       // 请求失败由 axios 响应拦截器统一提示，这里不重复弹窗
+      logUnexpectedError(error, 'ExportButton.handleExport')
     } finally {
       setExporting(false)
     }
