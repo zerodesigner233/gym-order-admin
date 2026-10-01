@@ -8,10 +8,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test:e2e": "node e2e/qa.cjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write \"src/**/*.{js,jsx,css,md}\" \"*.{js,json,md,html}\"",
-    "format:check": "prettier --check \"src/**/*.{js,jsx,css,md}\" \"*.{js,json,md,html}\""
+    "format": "prettier --write \"src/**/*.{js,jsx,css,md}\" \"docs/**/*.md\" \"e2e/**/*.cjs\" \"*.{js,json,md,html}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,css,md}\" \"docs/**/*.md\" \"e2e/**/*.cjs\" \"*.{js,json,md,html}\""
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",
@@ -33,6 +34,7 @@
     "eslint-plugin-react-hooks": "^6.1.1",
     "eslint-plugin-react-refresh": "^0.4.22",
     "globals": "^16.4.0",
+    "playwright": "^1.63.0",
     "prettier": "^3.6.2",
     "vite": "^7.1.7"
   },

@@ -44,5 +44,25 @@ export default [
       'no-var': 'error',
     },
   },
+  {
+    // 端到端自测脚本跑在 Node（CommonJS）里，不是浏览器代码：
+    // 需要 node globals，并且允许 console 输出用例结果
+    files: ['e2e/**/*.cjs'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+        // page.evaluate(() => window.localStorage.clear()) 这类回调是在浏览器里执行的，
+        // 所以这个文件同时需要 browser globals
+        ...globals.browser,
+      },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      'no-console': 'off',
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    },
+  },
   prettier,
 ]

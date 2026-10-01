@@ -9,6 +9,11 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# 端到端自测的产物（脚本本身在 e2e/ 下，纳入版本管理）
+e2e/shots
+e2e/downloads
+e2e/qa-report.json
+
 .DS_Store
 Thumbs.db
 
